@@ -1,0 +1,44 @@
+graph TD
+    %% Start
+    Start([START]) --> InitVars[Initialize Variables]
+    InitVars --> LoopStart[LOOP: Get Next Course]
+    
+    %% Loop and Controls
+    LoopStart --> CheckQuota{Is Quota<br>Available?}
+    
+    CheckQuota -- Yes --> CheckPrereq{Prerequisites<br>Met?}
+    CheckQuota -- No --> ErrQuota[Add Error: Quota Full]
+    
+    CheckPrereq -- Yes --> CheckConflict{Schedule<br>Conflict?}
+    CheckPrereq -- No --> ErrPrereq[Add Error: Missing Prereq]
+    
+    CheckConflict -- No --> CheckCredit{Credit Limit<br>OK?}
+    CheckConflict -- Yes --> ErrConflict[Add Error: Conflict]
+    
+    CheckCredit -- Yes --> AddCourse[Add to Approved<br>Update Credits]
+    CheckCredit -- No --> ErrCredit[Add Error: Credit Limit]
+    
+    %% End of Loop
+    AddCourse --> NextCourse[Go to Next Course]
+    ErrQuota --> NextCourse
+    ErrPrereq --> NextCourse
+    ErrConflict --> NextCourse
+    ErrCredit --> NextCourse
+    
+    NextCourse -- If Courses Remain --> LoopStart
+    NextCourse -- If List Empty --> CheckApproved{Any Approved<br>Courses?}
+    
+    %% Final Decisions
+    CheckApproved -- Yes --> CheckAdvisor{Advisor<br>Approved?}
+    CheckApproved -- No --> RegFailed[Registration Failed]
+    
+    CheckAdvisor -- Yes --> SaveDB[Registration Successful<br>Save to DB]
+    CheckAdvisor -- No --> AdvisorReject[Registration Pending / Rejected]
+    
+    RegFailed --> CheckErrors{Any Error<br>Messages?}
+    SaveDB --> CheckErrors
+    AdvisorReject --> CheckErrors
+    
+    CheckErrors -- Yes --> PrintErrors[Print Error Messages]
+    CheckErrors -- No --> End([END])
+    PrintErrors --> End
