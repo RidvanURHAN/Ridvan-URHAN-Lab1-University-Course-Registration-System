@@ -1,0 +1,77 @@
+digraph CourseRegistrationSystem {
+    // General visual settings
+    node [fontname="Helvetica,Arial,sans-serif", style="filled", fillcolor="white"]
+    edge [fontname="Helvetica,Arial,sans-serif", fontsize=10]
+
+    // Start and End
+    Start [shape=oval, label="START", fillcolor="lightgray"]
+    End [shape=oval, label="END", fillcolor="lightgray"]
+
+    // Process Steps
+    InitVars [shape=box, label="Initialize Variables\n(TotalCredits=0, Lists)"]
+    LoopStart [shape=box, label="LOOP: Get Next Course"]
+    AddCourse [shape=box, label="Add to Approved Courses\n& Update Credits"]
+    NextCourse [shape=box, label="Go to Next Course"]
+    
+    // Error Handling
+    ErrQuota [shape=box, label="Add Error: Quota Full"]
+    ErrPrereq [shape=box, label="Add Error: Missing Prerequisite"]
+    ErrConflict [shape=box, label="Add Error: Schedule Conflict"]
+    ErrCredit [shape=box, label="Add Error: Credit Limit Exceeded"]
+    PrintErrors [shape=box, label="Print Error Messages"]
+
+    // Outcome Steps
+    RegFailed [shape=box, label="Registration Failed"]
+    SaveDB [shape=box, label="Registration Successful\nSave to Database"]
+    AdvisorReject [shape=box, label="Registration Pending / Rejected"]
+
+    // Control Points (Diamond Shapes)
+    CheckQuota [shape=diamond, label="Is Quota\nAvailable?", fillcolor="lightyellow"]
+    CheckPrereq [shape=diamond, label="Prerequisites\nMet?", fillcolor="lightyellow"]
+    CheckConflict [shape=diamond, label="Schedule\nConflict?", fillcolor="lightyellow"]
+    CheckCredit [shape=diamond, label="Credit Limit\nOK?", fillcolor="lightyellow"]
+    CheckApproved [shape=diamond, label="Any Approved\nCourses?", fillcolor="lightyellow"]
+    CheckAdvisor [shape=diamond, label="Advisor\nApproved?", fillcolor="lightyellow"]
+    CheckErrors [shape=diamond, label="Any Error\nMessages?", fillcolor="lightyellow"]
+
+    // Flow (Edges)
+    Start -> InitVars
+    InitVars -> LoopStart
+    LoopStart -> CheckQuota
+
+    CheckQuota -> CheckPrereq [label="Yes"]
+    CheckQuota -> ErrQuota [label="No"]
+
+    CheckPrereq -> CheckConflict [label="Yes"]
+    CheckPrereq -> ErrPrereq [label="No"]
+
+    // If no conflict (No), continue process
+    CheckConflict -> CheckCredit [label="No"]
+    CheckConflict -> ErrConflict [label="Yes"]
+
+    CheckCredit -> AddCourse [label="Yes"]
+    CheckCredit -> ErrCredit [label="No"]
+
+    AddCourse -> NextCourse
+    ErrQuota -> NextCourse
+    ErrPrereq -> NextCourse
+    ErrConflict -> NextCourse
+    ErrCredit -> NextCourse
+
+    NextCourse -> LoopStart [label="If Courses Remain"]
+    NextCourse -> CheckApproved [label="If List Empty"]
+
+    CheckApproved -> CheckAdvisor [label="Yes"]
+    CheckApproved -> RegFailed [label="No"]
+
+    CheckAdvisor -> SaveDB [label="Yes"]
+    CheckAdvisor -> AdvisorReject [label="No"]
+
+    RegFailed -> CheckErrors
+    SaveDB -> CheckErrors
+    AdvisorReject -> CheckErrors
+
+    CheckErrors -> PrintErrors [label="Yes"]
+    CheckErrors -> End [label="No"]
+    PrintErrors -> End
+}
