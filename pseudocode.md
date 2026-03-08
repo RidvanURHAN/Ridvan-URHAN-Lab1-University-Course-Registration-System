@@ -1,67 +1,67 @@
-BAŞLA Kayitİslemi(Ogrenci, SecilenDerslerListesi)
-    // Başlangıç değişkenlerini tanımla
-    ToplamKredi = 0
-    OnaylananDersler = Boş Liste
-    HataMesajlari = Boş Liste
+START RegistrationProcess(Student, SelectedCoursesList)
+    // Initialize variables
+    TotalCredits = 0
+    ApprovedCourses = Empty List
+    ErrorMessages = Empty List
 
-    // Her bir ders için doğrulama döngüsünü başlat
-    DÖNGÜ: SecilenDerslerListesi içindeki HER BİR 'Ders' İÇİN:
+    // Start the validation loop for each course
+    LOOP: FOR EACH 'Course' IN SelectedCoursesList:
 
-        // 1. Kontenjan Kontrolü
-        EĞER Ders.MevcutKapasite < Ders.MaksimumKapasite İSE:
+        // 1. Quota Check
+        IF Course.CurrentCapacity < Course.MaximumCapacity THEN:
 
-            // 2. Önkoşul Kontrolü
-            EĞER Ogrenci.GecmisDersleriIceriyorMu(Ders.Onkosullar) == DOĞRU İSE:
+            // 2. Prerequisite Check
+            IF Student.HasPassedCourses(Course.Prerequisites) == TRUE THEN:
 
-                // 3. Program Çakışma Kontrolü
-                EĞER ProgramCakisiyorMu(OnaylananDersler, Ders.ZamanDilimi) == YANLIŞ İSE:
+                // 3. Schedule Conflict Check
+                IF HasScheduleConflict(ApprovedCourses, Course.TimeSlot) == FALSE THEN:
 
-                    // 4. Kredi Limiti Kontrolü
-                    EĞER ToplamKredi + Ders.KrediDegeri <= Ogrenci.MaksimumKrediLimiti İSE:
+                    // 4. Credit Limit Check
+                    IF TotalCredits + Course.CreditValue <= Student.MaximumCreditLimit THEN:
 
-                        // Tüm kontrollerden geçti, dersi listeye ekle ve krediyi güncelle
-                        OnaylananDersler.Ekle(Ders)
-                        ToplamKredi = ToplamKredi + Ders.KrediDegeri
+                        // Passed all checks, add course to list and update credits
+                        ApprovedCourses.Add(Course)
+                        TotalCredits = TotalCredits + Course.CreditValue
 
-                    DEĞİLSE:
-                        HataMesajlari.Ekle(Ders.Ad + ": Kredi limiti aşıldığı için eklenemedi.")
-                    BİTİR EĞER
+                    ELSE:
+                        ErrorMessages.Add(Course.Name + ": Could not be added due to credit limit.")
+                    END IF
 
-                DEĞİLSE:
-                    HataMesajlari.Ekle(Ders.Ad + ": Mevcut programınızdaki başka bir dersle çakışıyor.")
-                BİTİR EĞER
+                ELSE:
+                    ErrorMessages.Add(Course.Name + ": Conflicts with another course in your schedule.")
+                END IF
 
-            DEĞİLSE:
-                HataMesajlari.Ekle(Ders.Ad + ": Gerekli önkoşul derslerini henüz tamamlamadınız.")
-            BİTİR EĞER
+            ELSE:
+                ErrorMessages.Add(Course.Name + ": You have not completed the required prerequisites.")
+            END IF
 
-        DEĞİLSE:
-            HataMesajlari.Ekle(Ders.Ad + ": Kontenjan dolu.")
-            // Yedek listeye (waitlist) ekleme fonksiyonu buraya çağrılabilir
-        BİTİR EĞER
+        ELSE:
+            ErrorMessages.Add(Course.Name + ": Quota is full.")
+            // Waitlist function can be called here
+        END IF
 
-    DÖNGÜ BİTİR
+    END LOOP
 
-    // 5. Danışman Onayı Aşaması
-    EĞER OnaylananDersler.OgeSayisi > 0 İSE:
-        // Dersler danışmanın ekranına gönderilir
-        DanismanKarari = DanismanaOnayaGonder(Ogrenci, OnaylananDersler)
+    // 5. Advisor Approval Stage
+    IF ApprovedCourses.ItemCount > 0 THEN:
+        // Send courses to advisor's screen
+        AdvisorDecision = SendToAdvisorForApproval(Student, ApprovedCourses)
 
-        EĞER DanismanKarari == "ONAYLANDI" İSE:
-            VeritabaninaKaydet(Ogrenci, OnaylananDersler)
-            YAZDIR "Kayıt işlemi başarıyla tamamlandı."
-        DEĞİLSE:
-            YAZDIR "Kayıt beklemede. Danışmanınız taslağı reddetti veya değişiklik talep etti."
-        BİTİR EĞER
+        IF AdvisorDecision == "APPROVED" THEN:
+            SaveToDatabase(Student, ApprovedCourses)
+            PRINT "Registration successfully completed."
+        ELSE:
+            PRINT "Registration pending. Your advisor rejected the draft or requested changes."
+        END IF
 
-    DEĞİLSE:
-        YAZDIR "Kayıt başarısız. Seçilen hiçbir ders doğrulama adımlarını geçemedi."
-    BİTİR EĞER
+    ELSE:
+        PRINT "Registration failed. None of the selected courses passed the validation steps."
+    END IF
 
-    // Öğrenciye süreçte oluşan hataları göster
-    EĞER HataMesajlari.OgeSayisi > 0 İSE:
-        YAZDIR "Aşağıdaki hatalar oluştu:"
-        YAZDIR HataMesajlari
-    BİTİR EĞER
+    // Show errors to the student
+    IF ErrorMessages.ItemCount > 0 THEN:
+        PRINT "The following errors occurred:"
+        PRINT ErrorMessages
+    END IF
 
-BİTİR Kayitİslemi
+END RegistrationProcess
